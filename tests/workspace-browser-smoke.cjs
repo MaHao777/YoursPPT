@@ -54,9 +54,9 @@ const fixedRects = page => page.evaluate(() => ['.topbar', '.sidebar', '.stage-h
     await wheel(page, '.slide-list', 900);
     await page.waitForFunction(() => document.querySelector('.slide-list').scrollTop > 0);
     assert(await page.locator('.slide-list').evaluate(el => el.classList.contains('is-scrolling')));
-    assert.notEqual(await page.locator('.slide-list').evaluate(el => getComputedStyle(el, '::-webkit-scrollbar-thumb').backgroundColor), 'rgba(0, 0, 0, 0)');
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('.slide-list'), '::-webkit-scrollbar-thumb').backgroundColor !== 'rgba(0, 0, 0, 0)');
     await page.waitForFunction(() => !document.querySelector('.slide-list').classList.contains('is-scrolling'));
-    assert.equal(await page.locator('.slide-list').evaluate(el => getComputedStyle(el, '::-webkit-scrollbar-thumb').backgroundColor), 'rgba(0, 0, 0, 0)');
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('.slide-list'), '::-webkit-scrollbar-thumb').backgroundColor === 'rgba(0, 0, 0, 0)');
     assert(await page.locator('.slide-list').evaluate(el => el.classList.contains('scroll-fade-top') && el.classList.contains('scroll-fade-bottom')));
     assert.match(await page.locator('.slide-list').evaluate(el => getComputedStyle(el).maskImage), /linear-gradient/);
     await page.locator('.slide-list').evaluate(el => { el.scrollTop = el.scrollHeight; });
@@ -126,6 +126,7 @@ const fixedRects = page => page.evaluate(() => ['.topbar', '.sidebar', '.stage-h
     assert.equal(files.names.length, 2); assert.equal(files.pages, 45); assert.equal(files.title, fixture.state.meta.title);
     assert.equal(files.content, fixture.state.slides[0].content); assert.deepEqual(files.bytes, [0, 255, 34, 128]);
     await page.reload(); await page.locator('[data-action=settings]').click();
+    await page.locator('[data-settings-tab=files]').click();
     assert.match(await page.locator('#export-location').innerText(), /workspace-smoke/);
     await page.locator('[data-action=reset-export-directory]').click();
     await page.waitForFunction(() => document.querySelector('#export-location').textContent.includes('浏览器默认'));

@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="想清楚再开始。YoursPPT 帮你把汇报逻辑、素材与风格整理成一个完整的 Agent 工作包。">
     <meta name="theme-color" content="#f6f5f1">
+    <script src="src/preferences.js"></script>
     <title>YoursPPT · 让思考，成为一场好汇报</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ad432f'/%3E%3Cpath d='M15 16 32 34 49 16M32 34v16' stroke='%23fff' stroke-width='7' fill='none'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="styles.css">
     <script defer src="src/model.js"></script>
+    <script defer src="src/i18n.js"></script>
     <script defer src="src/storage.js"></script>
     <script defer src="src/styles.js"></script>
     <script defer src="assets/lib/marked.umd.js"></script>
@@ -36,10 +38,30 @@
     <input id="import-input" type="file" accept="application/json,application/zip,.json,.zip" hidden>
     <dialog id="settings-dialog" class="modal settings-dialog" aria-labelledby="settings-title">
       <button class="dialog-close" data-action="close-settings" aria-label="关闭设置">×</button>
-      <span class="eyebrow">WORKSPACE SETTINGS</span><h2 id="settings-title">保存与草稿</h2>
+      <span class="eyebrow">WORKSPACE SETTINGS</span><h2 id="settings-title">设置</h2>
+      <div class="settings-tabs" role="tablist" aria-label="设置分类">
+        <button id="settings-tab-appearance" role="tab" aria-selected="true" aria-controls="settings-appearance" data-settings-tab="appearance">外观与语言</button>
+        <button id="settings-tab-files" role="tab" aria-selected="false" aria-controls="settings-files" tabindex="-1" data-settings-tab="files">文件与草稿</button>
+        <button id="settings-tab-agent" role="tab" aria-selected="false" aria-controls="settings-agent" tabindex="-1" data-settings-tab="agent">Agent</button>
+      </div>
+      <div id="settings-appearance" class="settings-page" role="tabpanel" aria-labelledby="settings-tab-appearance" tabindex="0">
+        <section class="settings-section"><h3>颜色主题</h3><p>选择适合你的工作区外观。</p>
+          <div class="theme-options" role="radiogroup" aria-label="颜色主题">
+            <button class="theme-option" data-theme-choice="light" role="radio" aria-checked="true"><span class="theme-swatch light" aria-hidden="true"><i></i><i></i><i></i></span><span>浅色主题</span><span class="theme-check" aria-hidden="true">✓</span></button>
+            <button class="theme-option" data-theme-choice="dark" role="radio" aria-checked="false" tabindex="-1"><span class="theme-swatch dark" aria-hidden="true"><i></i><i></i><i></i></span><span>暗色主题</span><span class="theme-check" aria-hidden="true">✓</span></button>
+          </div>
+        </section>
+        <section class="settings-section"><h3>界面语言</h3><p>切换界面语言，汇报原文与素材保持原样。</p><label for="interface-language" class="sr-only">界面语言</label><select id="interface-language"><option value="zh-CN">中文（简体）</option><option value="en">English</option></select></section>
+        <p class="field-hint">偏好自动保存在当前浏览器，下次打开继续使用。</p>
+      </div>
+      <div id="settings-files" class="settings-page" role="tabpanel" aria-labelledby="settings-tab-files" tabindex="0" hidden>
       <section class="settings-section"><h3>导出位置</h3><p>草稿备份、工作包和 Agent 产物保存到此位置。相同名称会自动编号。</p><div id="export-location" class="location-card" role="status">浏览器默认下载位置</div><div class="settings-actions"><button class="btn secondary" data-action="choose-export-directory">选择文件夹</button><button class="text-btn" data-action="reset-export-directory">使用浏览器下载</button></div><p id="directory-hint" class="field-hint"></p></section>
       <section class="settings-section"><h3>当前草稿</h3><p id="settings-draft-summary"></p><div class="settings-actions"><button class="btn primary" data-action="backup">保存草稿 ↓</button><button class="btn secondary" data-action="import">读取草稿文件 ↗</button><button class="text-btn" data-action="resume-draft">继续本机草稿 →</button></div><p class="field-hint">未完成的内容也能保存。草稿 ZIP 包含所有文字、页面、配色与已导入的真实素材；也可读取工作包 ZIP 和旧版 JSON。</p></section>
       <div class="notice">编辑内容自动保存在当前浏览器。草稿文件用于跨设备恢复和长期备份；旧版 JSON 中的素材需重新选择。</div>
+      </div>
+      <div id="settings-agent" class="settings-page" role="tabpanel" aria-labelledby="settings-tab-agent" tabindex="0" hidden>
+        <section class="settings-section"><h3>本机 Agent</h3><p>支持 Codex CLI 与 Claude Code。先在终端完成安装和登录，然后在“Agent 生成”页面选择并刷新。</p><div class="notice">使用 Agent 自身的账号、模型与网络配置。制作状态和日志可在最后一步查看。</div><button class="btn secondary" data-action="settings-open-agent">打开 Agent 页面 →</button></section>
+      </div>
       <p id="settings-status" class="field-hint" role="status"></p>
       <button class="btn secondary" data-action="close-settings">完成</button>
     </dialog>

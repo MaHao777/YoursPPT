@@ -201,6 +201,7 @@ const screenshot = (page, name) => page.screenshot({ path: path.join(output, nam
     }
     // Settings saves a complete unfinished ZIP draft, and old JSON still restores IDs.
     await page.locator('[data-action=settings]').click();
+    await page.locator('[data-settings-tab=files]').click();
     const backupPromise = page.waitForEvent('download'); await page.locator('#settings-dialog [data-action=backup]').click();
     const backup = await backupPromise, backupPath = path.join(output, 'browser-draft.zip'); await backup.saveAs(backupPath);
     const backupData = await stateOf(page);

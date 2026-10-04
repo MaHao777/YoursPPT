@@ -42,14 +42,14 @@ const html = '<!doctype html><html><head><meta charset="utf-8"><title>测试结�
     await page.reload(); await page.locator('[data-action=start]').click();
     const card = page.locator('#agent-panel');
     assert.equal(await page.locator('.stage-head h1').innerText(), '检查与导出');
-    assert.equal(await page.locator('.step-label').innerText(), 'STEP 04 / 05');
+    assert.equal(await page.locator('.stage-head .step-label, .stage-head p').count(), 0);
     assert.equal(await page.locator('.sidebar .step').count(), 5);
     assert.equal(await card.count(), 0, 'review must not mount the Agent UI');
     assert.equal(discoveries, 0, 'review must not discover Agents');
     assert.equal(await page.locator('[data-action=export]').count(), 1);
     await page.locator('.stage-footer [data-action=next]').click();
     assert.equal(await page.locator('.stage-head h1').innerText(), 'Agent 生成');
-    assert.equal(await page.locator('.step-label').innerText(), 'STEP 05 / 05');
+    assert.equal(await page.locator('.stage-head .step-label, .stage-head p').count(), 0);
     assert.equal(await page.locator('[data-action=export]').count(), 0);
     await page.waitForFunction(() => !document.querySelector('[data-agent-action=generate]')?.disabled);
     assert.equal(await card.locator('#agent-choice').inputValue(), 'claude');

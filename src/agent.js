@@ -69,6 +69,44 @@
       remember(job.id);
     }
     function active() { return busy || cancelling || (job && ACTIVE.has(job.status)) || (!job && !!rememberedId); }
+    function enhanceChoice() {
+      const select = container.querySelector('#agent-choice'); if (!select) return;
+      select.hidden = true; select.tabIndex = -1;
+      const picker = root.document.createElement('div'); picker.className = 'agent-picker';
+      const choice = agents.find(agent => agent.id === selected);
+      picker.innerHTML = `<button type="button" id="agent-choice-trigger" class="agent-choice-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="agent-choice-options" ${select.disabled || !agents.length ? 'disabled' : ''}><span class="agent-avatar" aria-hidden="true">${escape(choice?.name?.[0] || 'A')}</span><span class="agent-choice-copy"><strong>${escape(choice?.name || '尚无可用 Agent')}</strong><small>${escape(choice?.version || (choice?.available ? '本机 Agent' : '未发现'))}</small></span><span class="agent-chevron" aria-hidden="true">⌄</span></button><div id="agent-choice-options" class="agent-choice-options" role="listbox" aria-label="制作 Agent" hidden>${agents.map(agent => `<button type="button" class="agent-choice-option" role="option" aria-selected="${agent.id === selected}" data-agent-id="${escape(agent.id)}" ${!agent.available ? 'disabled' : ''}><span class="agent-avatar" aria-hidden="true">${escape(agent.name[0])}</span><span class="agent-choice-copy"><strong>${escape(agent.name)}</strong><small>${escape(agent.available ? agent.version || '本机 Agent' : '未发现')}</small></span><span class="agent-option-check" aria-hidden="true">${agent.id === selected ? '✓' : ''}</span></button>`).join('')}</div>`;
+      select.after(picker); container.querySelector('label[for="agent-choice"]').htmlFor = 'agent-choice-trigger';
+      const trigger = picker.querySelector('.agent-choice-trigger'), list = picker.querySelector('[role="listbox"]');
+      const choices = () => [...list.querySelectorAll('button:not(:disabled)')];
+      const close = focus => { list.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (focus) trigger.focus(); };
+      const open = last => {
+        if (trigger.disabled) return;
+        list.hidden = false; trigger.setAttribute('aria-expanded', 'true');
+        const buttons = choices(); (last ? buttons.at(-1) : list.querySelector('[aria-selected="true"]:not(:disabled)') || buttons[0])?.focus();
+      };
+      trigger.onclick = event => { event.stopPropagation(); list.hidden ? open() : close(true); };
+      list.onclick = event => {
+        const option = event.target.closest('[data-agent-id]'); if (!option || option.disabled) return;
+        event.stopPropagation(); selected = option.dataset.agentId; select.value = selected;
+        render(); container.querySelector('#agent-choice-trigger')?.focus();
+      };
+      picker.onkeydown = event => {
+        const buttons = choices(), index = buttons.indexOf(root.document.activeElement);
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(true); }
+        else if (event.key === 'Tab') close(false);
+        else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+          event.preventDefault(); event.stopPropagation();
+          if (list.hidden) open(event.key === 'ArrowUp' || event.key === 'End');
+          else buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowUp' ? -1 : 1) + buttons.length) % buttons.length]?.focus();
+        }
+      };
+      Y.localize?.(picker);
+    }
+    root.document?.addEventListener('click', event => {
+      const picker = container?.querySelector('.agent-picker'); if (!picker || picker.contains(event.target)) return;
+      picker.querySelector('[role="listbox"]').hidden = true;
+      picker.querySelector('.agent-choice-trigger').setAttribute('aria-expanded', 'false');
+    });
     function render() {
       if (!container?.isConnected) return;
       const input = options.getInput(), invalid = options.issues(input.state, input.attachments).errors.length;
@@ -84,6 +122,7 @@
       }
       container.innerHTML = `<div class="panel-head"><div><span class="eyebrow">LOCAL AGENT</span><h2>让本机 Agent 完成制作</h2></div><span class="agent-badge" data-state="${escape(job?.status || (connected ? 'ready' : 'offline'))}">${escape(job ? STATUS[job.status] : connected ? '已连接本机' : '未连接')}</span></div><p>使用电脑上已安装并登录的 Agent，按选定风格生成 ${format}。Agent 会按其自身配置连接模型服务。</p><div class="agent-controls"><div class="field"><label for="agent-choice">制作 Agent</label><select id="agent-choice" ${active() || connecting ? 'disabled' : ''}>${agents.length ? agents.map(a => `<option value="${escape(a.id)}" ${a.id === selected ? 'selected' : ''} ${!a.available ? 'disabled' : ''}>${escape(a.name)}${a.available ? a.version ? ' · ' + escape(a.version) : '' : ' · 未发现'}</option>`).join('') : '<option value="">尚无可用 Agent</option>'}</select></div><button class="btn secondary" data-agent-action="refresh" ${connecting ? 'disabled' : ''}>${connecting ? '正在连接…' : error || !connected ? '重连本机服务' : '刷新 Agent'}</button></div><div class="agent-actions"><button class="btn primary" data-agent-action="generate" ${active() || connecting || !connected || !available.some(a => a.id === selected) || invalid ? 'disabled' : ''}>${busy ? '正在提交…' : invalid ? '补齐信息后生成' : '开始生成 ' + format}</button>${active() ? `<button class="btn secondary" data-agent-action="cancel" ${!job || cancelling ? 'disabled' : ''}>${cancelling ? '正在取消…' : '取消生成'}</button>` : ''}</div><p class="agent-status${error ? ' agent-error' : ''}" role="status"></p><p class="field-hint">本次生成使用点击时的内容快照。你可以继续查看和编辑；修改后需重新生成。</p>${job ? '<div class="agent-job-detail"></div>' : ''}`;
       container.querySelector('.agent-status').textContent = status;
+      enhanceChoice();
       const detail = container.querySelector('.agent-job-detail');
       if (detail) {
         detail.innerHTML = `<div class="agent-run-meta"><span>任务 ${escape(job.id)}</span>${job.directory ? '<span class="agent-directory"></span>' : ''}</div>${job.status === 'uploading' && !busy ? '<p class="field-hint">素材上传尚未完成。请取消此任务，再用当前完整内容重新生成。</p>' : ''}${job.error ? '<p class="agent-error agent-job-error"></p>' : ''}<details class="agent-log-details" ${ACTIVE.has(job.status) || job.status === 'failed' ? 'open' : ''}><summary>制作日志 · ${job.logs.length} 条</summary><pre class="agent-log" tabindex="0" aria-label="Agent 制作日志"></pre></details>${job.files.length ? `<div class="agent-results"><h3>生成的文件</h3><ul>${job.files.map((file, index) => `<li><span>${escape(file.name || file.path)}<small>${escape(formatSize(file.size))}</small></span><button class="text-btn" data-agent-action="download" data-file-index="${index}" ${downloading ? 'disabled' : ''}>下载 ↓</button></li>`).join('')}</ul><button class="btn secondary" data-agent-action="bundle" ${downloading ? 'disabled' : ''}>下载全部产物 ZIP ↓</button><p class="field-hint">HTML 演示含配套资源时，请下载 ZIP 并解压后打开。</p></div>` : ''}`;
