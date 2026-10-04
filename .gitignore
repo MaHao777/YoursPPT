@@ -1,0 +1,12 @@
+# Local browser/test artifacts
+.playwright-cli/
+output/playwright/
+output/agent-runs/
+output/zipcheck/
+
+# Interrupted clone attempts; use the complete snapshot instead.
+vendor/ppt-master/
+vendor/ppt-master-complete/
+
+# Reproducible editor bundle dependencies
+scripts/editor-build/node_modules/

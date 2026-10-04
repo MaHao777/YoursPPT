@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="想清楚再开始。YoursPPT 帮你把汇报逻辑、素材与风格整理成一个完整的 Agent 工作包。">
+    <meta name="theme-color" content="#f6f5f1">
+    <title>YoursPPT · 让思考，成为一场好汇报</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ad432f'/%3E%3Cpath d='M15 16 32 34 49 16M32 34v16' stroke='%23fff' stroke-width='7' fill='none'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="src/model.js"></script>
+    <script defer src="src/storage.js"></script>
+    <script defer src="src/styles.js"></script>
+    <script defer src="assets/lib/marked.umd.js"></script>
+    <script defer src="assets/lib/purify.min.js"></script>
+    <script defer src="src/markdown.js"></script>
+    <script defer src="src/markdown-editor.js"></script>
+    <script defer src="assets/lib/live-markdown-editor.bundle.js"></script>
+    <script defer src="src/zip.js"></script>
+    <script defer src="src/draft.js"></script>
+    <script defer src="src/export.js"></script>
+    <script defer src="src/folder.js"></script>
+    <script defer src="src/agent.js"></script>
+    <script defer src="src/scroll.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <a href="#content" class="skip-link">跳到主要内容</a>
+    <header class="topbar">
+      <button class="brand" data-action="home" aria-label="YoursPPT 首页"><span class="brand-symbol">Y<span>·</span></span><span>Yours<span class="brand-light">PPT</span></span></button>
+      <span class="topbar-caption">让思考，成为一场好汇报</span>
+      <div class="topbar-actions"><span id="save-status" class="save-status" role="status">本地工作区</span><button class="icon-text" data-action="help">使用介绍 <span aria-hidden="true">↗</span></button><button class="icon-text settings-trigger" data-action="settings"><span aria-hidden="true">⚙</span> 设置</button></div>
+    </header>
+    <div id="workspace"></div>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <input id="import-input" type="file" accept="application/json,application/zip,.json,.zip" hidden>
+    <dialog id="settings-dialog" class="modal settings-dialog" aria-labelledby="settings-title">
+      <button class="dialog-close" data-action="close-settings" aria-label="关闭设置">×</button>
+      <span class="eyebrow">WORKSPACE SETTINGS</span><h2 id="settings-title">保存与草稿</h2>
+      <section class="settings-section"><h3>导出位置</h3><p>草稿备份、工作包和 Agent 产物保存到此位置。相同名称会自动编号。</p><div id="export-location" class="location-card" role="status">浏览器默认下载位置</div><div class="settings-actions"><button class="btn secondary" data-action="choose-export-directory">选择文件夹</button><button class="text-btn" data-action="reset-export-directory">使用浏览器下载</button></div><p id="directory-hint" class="field-hint"></p></section>
+      <section class="settings-section"><h3>当前草稿</h3><p id="settings-draft-summary"></p><div class="settings-actions"><button class="btn primary" data-action="backup">保存草稿 ↓</button><button class="btn secondary" data-action="import">读取草稿文件 ↗</button><button class="text-btn" data-action="resume-draft">继续本机草稿 →</button></div><p class="field-hint">未完成的内容也能保存。草稿 ZIP 包含所有文字、页面、配色与已导入的真实素材；也可读取工作包 ZIP 和旧版 JSON。</p></section>
+      <div class="notice">编辑内容自动保存在当前浏览器。草稿文件用于跨设备恢复和长期备份；旧版 JSON 中的素材需重新选择。</div>
+      <p id="settings-status" class="field-hint" role="status"></p>
+      <button class="btn secondary" data-action="close-settings">完成</button>
+    </dialog>
+    <dialog id="reference-dialog" class="modal reference-dialog">
+      <button class="dialog-close" data-action="cancel-reference" aria-label="关闭文件夹搜索">×</button>
+      <span class="eyebrow">ADD REFERENCES</span><h2>从文件夹搜索引用内容</h2>
+      <p>按文件名或文件夹路径搜索，勾选后加入素材库并关联到当前页面。</p>
+      <label for="folder-search">搜索文件名 / 路径</label><input id="folder-search" type="search" placeholder="例如：实验、数据、报告.pdf">
+      <div id="folder-results" class="folder-results"></div><p id="folder-selection-status" role="status"></p>
+      <div class="dialog-actions"><button class="btn secondary" data-action="cancel-reference">取消</button><button class="btn primary" data-action="add-folder-references">添加并引用</button></div>
+    </dialog>
+    <dialog id="help-dialog" class="modal">
+      <button class="dialog-close" data-action="close-help" aria-label="关闭介绍">×</button>
+      <span class="eyebrow">A BETTER WAY TO BRIEF</span><h2>把思考留给自己，<br>把制作交给 Agent。</h2>
+      <p>YoursPPT 帮你先确定目标和每页逻辑，再整理素材、选择风格，最后调用本机 Agent 生成 PPTX 或 HTML，也可导出完整工作包。</p>
+      <ol class="help-flow"><li><b>01</b><div><strong>说清楚你要讲什么</strong><p>一页一个主要任务，让结论有支撑，让转场有理由。</p></div></li><li><b>02</b><div><strong>备齐素材与风格</strong><p>拖入真实文件，选择主题色和版式方向，看到即时预览。</p></div></li><li><b>03</b><div><strong>由本机 Agent 生成演示</strong><p>通过本机服务选择 Agent，生成 PPTX 或 HTML；也可离线导出工作包。</p></div></li></ol>
+      <div class="notice">右上角“设置”可选择导出位置、保存和读取草稿。未完成草稿也会完整保留；需要制作时再补齐必填信息。</div>
+      <button class="btn primary" data-action="close-help">知道了</button>
+    </dialog>
+    <dialog id="markdown-dialog" class="modal markdown-help-dialog" aria-labelledby="markdown-help-title">
+      <button class="dialog-close" data-action="close-markdown-help" aria-label="关闭 Markdown 帮助" autofocus>×</button>
+      <span class="eyebrow">EDITOR QUICK GUIDE</span><h2 id="markdown-help-title">Markdown 语法与快捷键</h2>
+      <p>直接在文字中输入语法。光标进入时显示标记，离开后呈现排版；点击表格可编辑原文。</p>
+      <div class="markdown-help-grid"><section><h3>基本语法</h3><dl><dt>标题</dt><dd><code># 一级标题</code><br><code>## 二级标题</code></dd><dt>粗体 / 斜体</dt><dd><code>**粗体**</code> · <code>*斜体*</code></dd><dt>列表 / 任务</dt><dd><code>- 要点</code> · <code>1. 步骤</code><br><code>- [ ] 待办</code> · <code>- [x] 完成</code></dd><dt>引用 / 链接</dt><dd><code>&gt; 引用内容</code><br><code>[名称](https://example.com)</code></dd><dt>代码</dt><dd><code>`行内代码`</code><br>代码块用三反引号包围，可在开头注明语言。</dd><dt>表格</dt><dd><pre>| 项目 | 数值 |
+| --- | --- |
+| A | 1 |</pre></dd></dl></section><section><h3>快捷键</h3><dl><dt>粗体 / 斜体 / 链接</dt><dd><kbd>Ctrl / ⌘ + B</kbd><br><kbd>Ctrl / ⌘ + I</kbd><br><kbd>Ctrl / ⌘ + K</kbd></dd><dt>撤销 / 重做</dt><dd><kbd>Ctrl / ⌘ + Z</kbd><br><kbd>Ctrl / ⌘ + Shift + Z</kbd></dd><dt>列表续写 / 退出</dt><dd><kbd>Enter</kbd> 续写下一项；空项再次 Enter 退出列表。</dd><dt>只换行</dt><dd><kbd>Shift + Enter</kbd></dd></dl></section></div>
+      <button class="btn secondary" data-action="close-markdown-help">继续编辑</button>
+    </dialog>
+    <dialog id="confirm-dialog" class="modal small-modal"><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="dialog-actions"><button class="btn secondary" id="confirm-cancel">取消</button><button class="btn primary" id="confirm-ok">确认</button></div></dialog>
+  </body>
+</html>
